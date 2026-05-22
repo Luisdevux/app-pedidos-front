@@ -197,7 +197,7 @@ export default function CardapioPage() {
             ) : filteredPratos.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 bg-surface-white rounded-3xl border-2 border-dashed border-border-gray shadow-sm">
                 <div className="w-20 h-20 bg-surface-light rounded-full flex items-center justify-center mb-6 ring-8 ring-surface-light/50">
-                    <UtensilsCrossed className="w-10 h-10 text-text-tertiary opacity-30" />
+                    <UtensilsCrossed className="w-10 h-10 text-text-tertiary opacity-60" />
                 </div>
                 <h3 className="text-xl font-bold text-text-primary mb-2">Nenhum item encontrado</h3>
                 <p className="text-text-secondary font-medium max-w-sm text-center">Comece criando pratos para sua loja.</p>
@@ -216,8 +216,8 @@ export default function CardapioPage() {
                             className="object-cover group-hover:scale-110 transition-transform duration-500" 
                         />
                         ) : (
-                        <div className="w-full h-full flex items-center justify-center text-text-tertiary/20">
-                            <ImageIcon className="w-10 h-10 opacity-20" />
+                        <div className="w-full h-full flex items-center justify-center text-text-tertiary/60">
+                            <ImageIcon className="w-10 h-10 opacity-50" />
                         </div>
                         )}
                         
@@ -413,7 +413,7 @@ function AdicionaisRefactored({ restauranteId }: { restauranteId?: string }) {
                     </div>
                 ) : (grupos || []).length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-24 bg-surface-white rounded-3xl border-2 border-dashed border-border-gray shadow-sm">
-                        <Layers className="w-12 h-12 text-text-tertiary mb-4 opacity-10" />
+                        <Layers className="w-12 h-12 text-text-tertiary mb-4 opacity-40" />
                         <h3 className="text-lg font-black text-text-primary">Nenhum grupo de adicionais</h3>
                         <p className="text-text-secondary font-medium text-sm">Ofereça opções extras para seus clientes.</p>
                     </div>
@@ -536,12 +536,12 @@ function GrupoCardRefactored({ grupo, onEdit, onDelete }: { grupo: AdicionalGrup
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {isLoading ? <div className="col-span-full py-4 flex gap-2">{[1,2,3].map(i => <div key={i} className="h-16 flex-1 bg-surface-light rounded-2xl animate-pulse" />)}</div> :
-                     (opcoes || []).length === 0 ? <div className="col-span-full py-10 flex flex-col items-center gap-3 bg-surface-light/20 border border-dashed border-border-gray rounded-3xl"><Plus className="w-6 h-6 text-text-tertiary opacity-20" /><p className="text-xs font-bold text-text-tertiary italic">Nenhum item.</p></div> :
+                     (opcoes || []).length === 0 ? <div className="col-span-full py-10 flex flex-col items-center gap-3 bg-surface-light/20 border border-dashed border-border-gray rounded-3xl"><Plus className="w-6 h-6 text-text-tertiary opacity-40" /><p className="text-xs font-bold text-text-tertiary italic">Nenhum item.</p></div> :
                      opcoes?.map((opcao) => (
                         <div key={opcao._id} className="group/item flex items-center justify-between p-4 bg-surface-light/40 rounded-2xl border border-border-gray/40 hover:bg-surface-white hover:border-primary-green/30 hover:shadow-md transition-all duration-300">
                             <div className="flex items-center gap-3 overflow-hidden">
                                 <div className="relative w-12 h-12 rounded-xl bg-surface-light border border-border-gray/50 overflow-hidden flex items-center justify-center shrink-0 shadow-inner group-hover/item:scale-105 transition-transform">
-                                    {opcao.foto_adicional ? <Image src={opcao.foto_adicional} alt={opcao.nome} fill unoptimized className="object-cover" /> : <ImageIcon className="w-5 h-5 text-text-tertiary/20" />}
+                                    {opcao.foto_adicional ? <Image src={opcao.foto_adicional} alt={opcao.nome} fill unoptimized className="object-cover" /> : <ImageIcon className="w-5 h-5 text-text-tertiary/50" />}
                                 </div>
                                 <div className="flex flex-col min-w-0">
                                     <span className="text-sm font-bold text-text-primary leading-tight truncate">{opcao.nome}</span>
@@ -675,7 +675,7 @@ function AdicionalOpcaoModalRefactored({ open, onOpenChange, opcao, onSubmit, on
                                 ) : opcao?.foto_adicional ? (
                                     <Image src={opcao.foto_adicional} alt="Adicional" fill unoptimized className="object-cover" />
                                 ) : (
-                                    <div className="flex flex-col items-center gap-2 opacity-30">
+                                    <div className="flex flex-col items-center gap-2 opacity-50">
                                         <Utensils className="w-10 h-10 text-text-tertiary" />
                                         <span className="text-[9px] font-black uppercase tracking-widest">Sem Foto</span>
                                     </div>

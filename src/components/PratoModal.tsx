@@ -162,7 +162,7 @@ export function PratoModal({
                                 ) : initialData?.foto_prato ? (
                                     <Image src={initialData.foto_prato} alt="Prato" fill unoptimized className="object-cover" />
                                 ) : (
-                                    <div className="flex flex-col items-center gap-2 opacity-30">
+                                    <div className="flex flex-col items-center gap-2 opacity-50">
                                         <Utensils className="w-12 h-12 text-text-tertiary" />
                                         <span className="text-[10px] font-black uppercase tracking-widest">Sem Foto</span>
                                     </div>
