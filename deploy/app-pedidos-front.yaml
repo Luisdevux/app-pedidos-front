@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-pedidos-front
+  labels:
+    app: app-pedidos-front
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: app-pedidos-front
+  template:
+    metadata:
+      labels:
+        app: app-pedidos-front
+    spec:
+      containers:
+        - name: app-pedidos-front
+          image: yurizetoles/app-pedidos-front:latest # Substituir pelo seu repositório
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3001
+          envFrom:
+            - configMapRef:
+                name: app-pedidos-front-config
+          env:
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: rango-secrets
+                  key: nextauth-secret
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: rango-secrets
+                  key: google-client-id
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: rango-secrets
+                  key: google-client-secret
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /api/auth/session
+              port: 3001
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /login
+              port: 3001
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-pedidos-front-service
+spec:
+  type: ClusterIP
+  selector:
+    app: app-pedidos-front
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3001

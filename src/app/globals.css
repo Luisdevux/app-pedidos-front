@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+@theme {
+  /* Cores de Marca */
+  --color-primary-green: #14b822;
+  --color-primary-navy: #0a0e1a;
+  --color-secondary-navy: #161b2e;
+  
+  /* Cores Semânticas Adaptativas */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  
+  --color-border-gray: var(--border-gray);
+  --color-input-border: var(--input-border);
+  
+  --color-surface-light: var(--surface-light);
+  --color-surface-white: var(--surface-white);
+
+  --color-error-bg: var(--error-bg);
+  --color-error-text: var(--error-text);
+  --color-error-button: #ef4444;
+
+  --color-success-bg: var(--success-bg);
+  --color-success-text: var(--success-text);
+
+  /* Dashboard Admin Colors */
+  --color-card-blue: #7c6af6;
+  --color-card-orange: #d97706;
+  --color-card-green: #16a34a;
+  --color-card-yellow: #fbbf24;
+  --color-card-purple: #a855f7;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #1a1a1a;
+  
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b7280;
+  --text-tertiary: #4b5563;
+  
+  --border-gray: #e5e7eb;
+  --input-border: #e5e7eb;
+  
+  --surface-light: #f9fafb;
+  --surface-white: #ffffff;
+
+  --error-bg: #ffebee;
+  --error-text: #c62828;
+  
+  --success-bg: #e8f5e9;
+  --success-text: #2e7d32;
+
+  --placeholder-color: #9ca3af;
+}
+
+/* Modo escuro via classe .dark */
+.dark {
+  --background: #0a0e1a;
+  --foreground: #f9fafb;
+  
+  --text-primary: #f9fafb;
+  --text-secondary: #a0aec0;
+  --text-tertiary: #718096;
+  
+  --border-gray: #2d3748;
+  --input-border: #2d3748;
+  
+  --surface-light: #161b2e;
+  --surface-white: #1a202c;
+
+  --error-bg: #3d1a2e;
+  --error-text: #ff8a9b;
+  
+  --success-bg: #132d24;
+  --success-text: #6eedb0;
+
+  --placeholder-color: #718096;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Correção para Select e Inputs no tema escuro/claro */
+select, input, textarea {
+  color: inherit;
+  background-color: transparent;
+}
+
+/* Garante visibilidade dos placeholders no dark mode */
+::placeholder {
+  color: var(--placeholder-color);
+  opacity: 1; /* Firefox */
+}
+
+option {
+  color: var(--text-primary);
+  background-color: var(--surface-white);
+}
