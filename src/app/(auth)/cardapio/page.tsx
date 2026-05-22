@@ -1,6 +1,7 @@
 "use client";
 
 import { useRestauranteMutations } from "@/hooks/useRestaurantes";
+import { BlockedOverlay } from "@/components/BlockedOverlay";
 import { useActiveRestaurante } from "@/hooks/useActiveRestaurante";
 import { usePratosRestaurante, usePratoMutations, useGruposAdicionais, useAdicionalMutations } from "@/hooks/useCardapio";
 import { 
@@ -141,7 +142,7 @@ export default function CardapioPage() {
                 <Settings2 className="w-4 h-4 text-text-tertiary" />
                 Gerenciar Seções
             </Button>
-            <Button className="h-12 px-8 rounded-2xl font-black gap-2 shadow-lg shadow-primary-green/10 bg-primary-green text-white hover:bg-primary-green/90 cursor-pointer transition-all active:scale-95 border-none" onClick={handleOpenCreate}>
+            <Button className="h-12 px-8 rounded-2xl font-black gap-2 shadow-lg shadow-primary-green/5 bg-primary-green text-white hover:bg-primary-green/90 cursor-pointer transition-all active:scale-95 border-none" onClick={handleOpenCreate}>
                 <Plus className="w-5 h-5" />
                 ADICIONAR PRATO
             </Button>
@@ -313,7 +314,7 @@ export default function CardapioPage() {
                     className="h-14 bg-surface-light border border-border-gray rounded-2xl text-text-primary font-bold focus:ring-4 focus:ring-primary-green/5 shadow-inner"
                     onKeyDown={(e) => e.key === 'Enter' && handleAddSecao()}
                 />
-                <Button onClick={handleAddSecao} disabled={isSavingRest || !newSecao} className="h-14 w-14 rounded-2xl shadow-lg shadow-primary-green/20 bg-primary-green text-white cursor-pointer active:scale-95 transition-all">
+                <Button onClick={handleAddSecao} disabled={isSavingRest || !newSecao} className="h-14 w-14 rounded-2xl shadow-lg shadow-primary-green/5 bg-primary-green text-white cursor-pointer active:scale-95 transition-all">
                     <Plus className="w-6 h-6" />
                 </Button>
              </div>
@@ -338,7 +339,7 @@ export default function CardapioPage() {
              </div>
           </div>
           <div className="p-8 pt-0">
-             <Button className="w-full h-14 rounded-2xl font-black shadow-lg shadow-primary-green/10 bg-primary-green text-white cursor-pointer active:scale-[0.98] transition-all border-none" onClick={() => setIsSecaoModalOpen(false)}>CONCLUIR E SALVAR</Button>
+             <Button className="w-full h-14 rounded-2xl font-black shadow-lg shadow-primary-green/5 bg-primary-green text-white cursor-pointer active:scale-[0.98] transition-all border-none" onClick={() => setIsSecaoModalOpen(false)}>CONCLUIR E SALVAR</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -508,10 +509,10 @@ function GrupoCardRefactored({ grupo, onEdit, onDelete }: { grupo: AdicionalGrup
                             <h3 className="text-xl font-black tracking-tight">{grupo.nome}</h3>
                             <div className="flex items-center gap-2">
                                 <span className={cn(
-                                    "text-[9px] font-black uppercase px-2.5 py-1 rounded-lg border shadow-sm",
+                                    "text-[9px] font-black uppercase px-2.5 py-1 rounded-lg shadow-sm text-white",
                                     grupo.tipo === 'variacao' 
-                                        ? "border-amber-600 bg-amber-500 text-white" 
-                                        : "border-blue-600 bg-blue-500 text-white"
+                                        ? "bg-primary-navy" 
+                                        : "bg-primary-green"
                                 )}>{grupo.tipo === 'variacao' ? 'ESCOLHA ÚNICA' : 'MÚLTIPLA'}</span>
                                 {grupo.obrigatorio && <span className="text-[9px] font-black uppercase px-2.5 py-1 rounded-lg border border-red-500 bg-red-500 text-white animate-pulse shadow-sm shadow-red-500/20">Obrigatório</span>}
                             </div>
@@ -607,7 +608,7 @@ function AdicionalGrupoModalRefactored({ open, onOpenChange, grupo, onSubmit, is
                         <div className="space-y-2"><Label className="text-[10px] font-black text-text-tertiary uppercase tracking-widest ml-1">Máximo</Label><Input type="number" value={max} min={1} onChange={(e) => setMax(Number(e.target.value))} className="h-14 bg-surface-light border border-border-gray rounded-2xl font-bold text-text-primary shadow-inner focus:ring-4 focus:ring-primary-green/5" /></div>
                     </div>
                 </div>
-                <div className="p-10 pt-0 grid grid-cols-2 gap-4"><Button variant="ghost" className="h-14 rounded-2xl font-bold text-text-tertiary hover:bg-surface-light border-none shadow-none cursor-pointer transition-all active:scale-95" onClick={() => onOpenChange(false)}>CANCELAR</Button><Button onClick={() => onSubmit({ nome, tipo, obrigatorio, min, max })} disabled={isLoading} className="h-14 rounded-2xl font-black bg-primary-green text-white shadow-lg shadow-primary-green/20 cursor-pointer active:scale-95 transition-all border-none">{isLoading ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : "SALVAR GRUPO"}</Button></div>
+                <div className="p-10 pt-0 grid grid-cols-2 gap-4"><Button variant="ghost" className="h-14 rounded-2xl font-bold text-text-tertiary hover:bg-surface-light border-none shadow-none cursor-pointer transition-all active:scale-95" onClick={() => onOpenChange(false)}>CANCELAR</Button><Button onClick={() => onSubmit({ nome, tipo, obrigatorio, min, max })} disabled={isLoading} className="h-14 rounded-2xl font-black bg-primary-green text-white shadow-lg shadow-primary-green/5 cursor-pointer active:scale-95 transition-all border-none">{isLoading ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : "SALVAR GRUPO"}</Button></div>
             </DialogContent>
         </Dialog>
     );
@@ -732,7 +733,7 @@ function AdicionalOpcaoModalRefactored({ open, onOpenChange, opcao, onSubmit, on
 
                 <div className="p-10 pt-0 grid grid-cols-2 gap-4">
                     <Button variant="ghost" className="h-14 rounded-2xl font-bold text-text-tertiary hover:bg-surface-light border-none shadow-none cursor-pointer transition-all active:scale-95" onClick={() => onOpenChange(false)}>CANCELAR</Button>
-                    <Button onClick={() => onSubmit({ nome, preco }, selectedFile)} disabled={isLoading} className="h-14 rounded-2xl font-black bg-primary-green text-white shadow-lg shadow-primary-green/20 cursor-pointer active:scale-95 transition-all border-none">
+                    <Button onClick={() => onSubmit({ nome, preco }, selectedFile)} disabled={isLoading} className="h-14 rounded-2xl font-black bg-primary-green text-white shadow-lg shadow-primary-green/5 cursor-pointer active:scale-95 transition-all border-none">
                         {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : "SALVAR ITEM"}
                     </Button>
                 </div>

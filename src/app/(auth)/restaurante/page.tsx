@@ -234,7 +234,7 @@ export default function RestaurantePage() {
                 <button 
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-2 -right-2 p-3 bg-primary-navy text-white rounded-2xl shadow-2xl hover:scale-110 transition-all z-10 border-4 border-surface-white cursor-pointer active:scale-95"
+                  className="absolute -bottom-2 -right-2 p-3 bg-primary-navy text-white rounded-2xl shadow-lg hover:scale-110 transition-all z-10 border-4 border-surface-white cursor-pointer active:scale-95"
                   title="Alterar Logo"
                 >
                   <Camera className="w-4 h-4" />
@@ -453,7 +453,7 @@ export default function RestaurantePage() {
                             <div className="flex items-center gap-3">
                                 <div className="relative">
                                     <div className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-primary-green rounded-lg flex items-center justify-center shadow-sm">
-                                        <Clock className="w-3.5 h-3.5 text-white" />
+                                        <Clock className="w-4 h-4 text-white" />
                                     </div>
                                     <input 
                                         type="time" 
@@ -465,7 +465,7 @@ export default function RestaurantePage() {
                                 <span className="text-[10px] font-black text-text-tertiary uppercase px-1">Até</span>
                                 <div className="relative">
                                     <div className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-primary-green rounded-lg flex items-center justify-center shadow-sm">
-                                        <Clock className="w-3.5 h-3.5 text-white" />
+                                        <Clock className="w-4 h-4 text-white" />
                                     </div>
                                     <input 
                                         type="time" 
@@ -499,7 +499,7 @@ export default function RestaurantePage() {
               </div>
 
               <div className="pt-6">
-                <Button type="submit" disabled={isSaving} className="w-full md:w-fit px-12 h-14 rounded-2xl font-black text-lg shadow-2xl shadow-primary-green/20 bg-primary-green text-white hover:bg-primary-green/90 transition-all border-none cursor-pointer active:scale-95">
+                <Button type="submit" disabled={isSaving} className="w-full md:w-fit px-12 h-14 rounded-2xl font-black text-lg shadow-lg shadow-primary-green/10 bg-primary-green text-white hover:bg-primary-green/90 transition-all border-none cursor-pointer active:scale-95">
                     {isSaving ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Save className="w-5 h-5 mr-3" />}
                     SALVAR TODAS AS ALTERAÇÕES
                 </Button>
@@ -590,7 +590,7 @@ export default function RestaurantePage() {
       </div>
 
       <Dialog open={isDeleteLogoOpen} onOpenChange={setIsDeleteLogoOpen}>
-        <DialogContent className="sm:max-w-[420px] bg-surface-white border-border-gray shadow-2xl rounded-[3rem] p-10 text-text-primary">
+        <DialogContent className="sm:max-w-[420px] bg-surface-white border-border-gray shadow-xl rounded-[3rem] p-10 text-text-primary">
           <DialogHeader className="space-y-4">
             <div className="w-20 h-20 bg-error-bg rounded-[2rem] flex items-center justify-center mx-auto shadow-xl shadow-error-text/5">
                 <Trash2 className="w-10 h-10 text-error-text" />

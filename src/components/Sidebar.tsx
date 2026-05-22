@@ -79,7 +79,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                 <button 
                     onClick={() => setIsStoreMenuOpen(!isStoreMenuOpen)}
                     className={cn(
-                        "w-full flex items-center gap-3 p-3.5 bg-secondary-navy rounded-2xl border transition-all duration-300 group",
+                        "w-full flex items-center gap-3 p-3.5 bg-secondary-navy rounded-2xl border transition-all duration-300 group cursor-pointer",
                         isStoreMenuOpen ? "border-primary-green ring-4 ring-primary-green/10" : "border-white/5 hover:border-white/20"
                     )}
                 >
@@ -136,7 +136,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                   href={item.href}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium",
+                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium cursor-pointer",
                     isActive 
                       ? "bg-primary-green text-white shadow-lg shadow-primary-green/20" 
                       : "text-gray-400 hover:bg-secondary-navy hover:text-white"
@@ -162,7 +162,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
 
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all font-medium"
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all font-medium cursor-pointer"
             >
               <LogOut className="w-5 h-5" />
               Sair
@@ -171,8 +171,8 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto p-4 lg:p-8 pt-16 lg:pt-8 bg-surface-light">
-        <div className="max-w-7xl mx-auto">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden bg-surface-light custom-scrollbar">
+        <div className="max-w-7xl mx-auto p-4 lg:p-8 pt-16 lg:pt-8">
           {children}
         </div>
       </main>

@@ -181,7 +181,7 @@ export function PratoModal({
                                 <button 
                                     type="button"
                                     onClick={removePhoto}
-                                    className="absolute -top-2 -right-2 p-1.5 bg-error-button text-white rounded-full shadow-md hover:scale-110 transition-all z-20 border-2 border-surface-white"
+                                    className="absolute -top-2 -right-2 p-1.5 bg-error-button text-white rounded-full shadow-md hover:scale-110 transition-all z-20 border-2 border-surface-white cursor-pointer active:scale-90"
                                 >
                                     <X className="w-3 h-3" />
                                 </button>
@@ -256,7 +256,7 @@ export function PratoModal({
                                     <span className="text-xs font-bold">{grupo.nome}</span>
                                     <div className={cn(
                                         "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all shrink-0",
-                                        selectedGrupos.includes(grupo._id) ? "bg-primary-green border-primary-green scale-110 shadow-lg shadow-primary-green/20" : "border-border-gray group-hover/item:border-primary-green/50"
+                                        selectedGrupos.includes(grupo._id) ? "bg-primary-green border-primary-green scale-110 shadow-md shadow-primary-green/5" : "border-border-gray group-hover/item:border-primary-green/50"
                                     )}>
                                         {selectedGrupos.includes(grupo._id) && <CheckCircle2 className="w-4 h-4 text-white" />}
                                     </div>
@@ -274,6 +274,7 @@ export function PratoModal({
                     <Switch 
                         checked={statusValue === 'ativo'}
                         onCheckedChange={(checked) => setValue("status", checked ? 'ativo' : 'inativo')}
+                        className="cursor-pointer"
                     />
                 </div>
             </form>
@@ -281,7 +282,7 @@ export function PratoModal({
 
         <div className="p-8 border-t border-border-gray bg-surface-light/20 flex gap-4">
             <Button type="button" variant="ghost" className="h-14 flex-1 rounded-2xl font-bold text-text-tertiary hover:bg-surface-light" onClick={() => onOpenChange(false)}>CANCELAR</Button>
-            <Button form="prato-form" type="submit" disabled={isLoading} className="h-14 flex-[2] rounded-2xl font-black shadow-xl shadow-primary-green/20 bg-primary-green text-white hover:bg-primary-green/90">
+            <Button form="prato-form" type="submit" disabled={isLoading} className="h-14 flex-[2] rounded-2xl font-black shadow-lg shadow-primary-green/10 bg-primary-green text-white hover:bg-primary-green/90">
                 {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : "SALVAR PRODUTO"}
             </Button>
         </div>

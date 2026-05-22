@@ -188,7 +188,7 @@ export default function Onboarding() {
 
             <Button 
               type="submit" 
-              className="w-full h-14 rounded-2xl text-base font-black shadow-xl shadow-primary-green/20 mt-4 group transition-all active:scale-95"
+              className="w-full h-14 rounded-2xl text-base font-black shadow-lg shadow-primary-green/10 mt-4 group transition-all active:scale-95 cursor-pointer"
               disabled={isSaving}
             >
               {isSaving ? <Loader2 className="w-6 h-6 animate-spin" /> : "COMEÇAR AGORA"}

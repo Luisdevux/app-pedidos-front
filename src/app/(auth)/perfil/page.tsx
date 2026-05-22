@@ -112,7 +112,7 @@ export default function PerfilPage() {
                             <button 
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="absolute bottom-0 right-0 p-2 bg-primary-navy text-white rounded-full shadow-lg hover:scale-105 transition-all z-10 border-2 border-white"
+                                className="absolute bottom-0 right-0 p-2 bg-primary-navy text-white rounded-full shadow-lg hover:scale-105 transition-all z-10 border-2 border-white cursor-pointer"
                                 title="Alterar foto"
                             >
                                 <Camera className="w-4 h-4" />
@@ -122,7 +122,7 @@ export default function PerfilPage() {
                                     type="button"
                                     onClick={() => setIsDeletePhotoOpen(true)}
                                     disabled={isDeleting}
-                                    className="absolute top-0 right-0 p-1.5 bg-error-button text-white rounded-full shadow-lg hover:scale-105 transition-all z-10 border-2 border-white"
+                                    className="absolute top-0 right-0 p-1.5 bg-error-button text-white rounded-full shadow-lg hover:scale-105 transition-all z-10 border-2 border-white cursor-pointer"
                                     title="Remover foto"
                                 >
                                     <X className="w-3 h-3" />
@@ -151,7 +151,7 @@ export default function PerfilPage() {
                         <Button 
                             variant="secondary" 
                             size="sm" 
-                            className="w-full font-bold h-10 rounded-xl"
+                            className="w-full font-bold h-10 rounded-xl cursor-pointer"
                             onClick={() => setIsPasswordModalOpen(true)}
                         >
                             Alterar Senha
@@ -222,7 +222,7 @@ export default function PerfilPage() {
                                 </div>
                             </div>
 
-                            <Button type="submit" disabled={isSaving} className="w-full sm:w-auto px-8 h-12 rounded-2xl font-black shadow-xl shadow-primary-green/20">
+                            <Button type="submit" disabled={isSaving} className="w-full sm:w-auto px-8 h-12 rounded-2xl font-black shadow-lg shadow-primary-green/10 cursor-pointer">
                                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                                 SALVAR ALTERAÇÕES
                             </Button>
@@ -243,10 +243,10 @@ export default function PerfilPage() {
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="gap-3 mt-6">
-                        <Button variant="outline" className="rounded-xl font-bold flex-1" onClick={() => setIsDeletePhotoOpen(false)}>Cancelar</Button>
+                        <Button variant="outline" className="rounded-xl font-bold flex-1 cursor-pointer" onClick={() => setIsDeletePhotoOpen(false)}>Cancelar</Button>
                         <Button 
                             variant="destructive" 
-                            className="rounded-xl font-bold flex-1" 
+                            className="rounded-xl font-bold flex-1 cursor-pointer" 
                             disabled={isDeleting}
                             onClick={() => {
                                 deleteFoto();
@@ -278,9 +278,9 @@ export default function PerfilPage() {
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="gap-3 mt-8">
-                        <Button variant="ghost" className="rounded-xl font-bold flex-1 h-12 text-text-tertiary" onClick={() => setIsPasswordModalOpen(false)}>CANCELAR</Button>
+                        <Button variant="ghost" className="rounded-xl font-bold flex-1 h-12 text-text-tertiary cursor-pointer" onClick={() => setIsPasswordModalOpen(false)}>CANCELAR</Button>
                         <Button 
-                            className="rounded-xl font-black flex-1 h-12 bg-primary-green hover:bg-primary-green/90 text-white shadow-lg shadow-primary-green/20" 
+                            className="rounded-xl font-black flex-1 h-12 bg-primary-green hover:bg-primary-green/90 text-white shadow-lg shadow-primary-green/10 cursor-pointer" 
                             onClick={() => {
                                 toast.success("Link de redefinição enviado para " + userData?.email);
                                 setIsPasswordModalOpen(false);
