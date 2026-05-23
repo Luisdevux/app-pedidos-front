@@ -24,10 +24,8 @@ import {
     CheckCircle2,
     XCircle
 } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { useEnderecoUsuario } from "@/hooks/useEnderecos";
-import { cn } from "@/lib/utils";
+import { cn, safeFormatDate } from "@/lib/utils";
 import { maskPhone, maskCPF } from "@/lib/masks";
 
 interface OrderDetailModalProps {
@@ -46,11 +44,17 @@ const statusConfig = {
 
 export function OrderDetailModal({ open, onOpenChange, pedido }: OrderDetailModalProps) {
     const cliente = pedido?.cliente_id || pedido?.usuario_id;
-    const { data: enderecos, isLoading: isLoadingAddr } = useEnderecoUsuario(cliente?._id);
+    const clienteNome = (typeof cliente === 'object' ? cliente?.nome : null) || "Cliente não identificado";
+    const clienteEmail = (typeof cliente === 'object' ? cliente?.email : null) || "-";
+    const clienteTelefone = (typeof cliente === 'object' ? cliente?.telefone : null);
+    const clienteCpf = (typeof cliente === 'object' ? cliente?.cpf : null);
+    const clienteId = typeof cliente === 'object' ? cliente?._id : (typeof cliente === 'string' ? cliente : undefined);
+
+    const { data: enderecos, isLoading: isLoadingAddr } = useEnderecoUsuario(clienteId);
     
     if (!pedido) return null;
 
-    const enderecoEntrega = enderecos?.find(e => e.principal) || enderecos?.[0];
+    const enderecoEntrega = (enderecos || [])?.find(e => e.principal) || (enderecos || [])?.[0];
     const status = statusConfig[pedido.status] || statusConfig.criado;
     const StatusIcon = status.icon;
 
@@ -84,26 +88,26 @@ export function OrderDetailModal({ open, onOpenChange, pedido }: OrderDetailModa
                         </h3>
                         <div className="bg-surface-light/50 p-4 rounded-2xl border border-border-gray/50 space-y-3">
                             <div>
-                                <p className="font-bold text-text-primary">{cliente?.nome || "Cliente não identificado"}</p>
-                                <p className="text-sm text-text-secondary">{cliente?.email || "-"}</p>
+                                <p className="font-bold text-text-primary">{clienteNome}</p>
+                                <p className="text-sm text-text-secondary">{clienteEmail}</p>
                             </div>
                             
                             <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border-gray/30">
-                                {cliente?.telefone && (
+                                {clienteTelefone && (
                                     <div className="flex flex-col gap-1">
                                         <span className="text-[9px] font-black text-text-tertiary uppercase">WhatsApp</span>
                                         <div className="flex items-center gap-1.5 text-primary-green text-xs font-black">
                                             <Phone className="w-3 h-3" />
-                                            {maskPhone(cliente.telefone)}
+                                            {maskPhone(clienteTelefone)}
                                         </div>
                                     </div>
                                 )}
-                                {cliente?.cpf && (
+                                {clienteCpf && (
                                     <div className="flex flex-col gap-1">
                                         <span className="text-[9px] font-black text-text-tertiary uppercase">Documento CPF</span>
                                         <div className="flex items-center gap-1.5 text-text-primary text-xs font-bold">
                                             <FileText className="w-3 h-3 text-text-tertiary" />
-                                            {maskCPF(cliente.cpf)}
+                                            {maskCPF(clienteCpf)}
                                         </div>
                                     </div>
                                 )}
@@ -161,17 +165,23 @@ export function OrderDetailModal({ open, onOpenChange, pedido }: OrderDetailModa
                             <Package className="w-3 h-3" /> Itens do Pedido
                         </h3>
                         <div className="space-y-2">
-                            {pedido.itens.map((item, idx) => (
+                            {(pedido.itens || []).map((item, idx) => (
                                 <div key={idx} className="bg-surface-white p-4 rounded-2xl border border-border-gray flex flex-col gap-2">
                                     <div className="flex justify-between items-start">
                                         <div className="flex gap-3">
-                                            <span className="font-black text-primary-green">{item.quantidade}x</span>
+                                            <span className="font-black text-primary-green">{item.quantidade || 0}x</span>
                                             <div className="flex flex-col">
-                                                <span className="font-bold text-text-primary leading-tight">{item.prato_id?.nome || item.prato_nome || "Prato removido"}</span>
-                                                <span className="text-[10px] text-text-tertiary">Preço unit: R$ {item.preco_unitario.toFixed(2).replace('.', ',')}</span>
+                                                <span className="font-bold text-text-primary leading-tight">
+                                                    {(typeof item.prato_id === 'object' ? item.prato_id?.nome : null) || item.prato_nome || "Produto"}
+                                                </span>
+                                                <span className="text-[10px] text-text-tertiary">
+                                                    Preço unit: R$ {(item.preco_unitario || 0).toFixed(2).replace('.', ',')}
+                                                </span>
                                             </div>
                                         </div>
-                                        <span className="font-bold text-text-primary">R$ {(item.preco_unitario * item.quantidade).toFixed(2).replace('.', ',')}</span>
+                                        <span className="font-bold text-text-primary">
+                                            R$ {((item.preco_unitario || 0) * (item.quantidade || 0)).toFixed(2).replace('.', ',')}
+                                        </span>
                                     </div>
                                 </div>
                             ))}
@@ -186,7 +196,7 @@ export function OrderDetailModal({ open, onOpenChange, pedido }: OrderDetailModa
                         </div>
                         <div className="flex justify-between text-sm text-text-secondary">
                             <span>Taxa de Entrega</span>
-                            <span>R$ 0,00</span>
+                            <span>R$ {(pedido.totais?.taxa_entrega || 0).toFixed(2).replace('.', ',')}</span>
                         </div>
                         <div className="flex justify-between text-lg font-black text-text-primary pt-2">
                             <span>Total</span>
@@ -210,7 +220,7 @@ export function OrderDetailModal({ open, onOpenChange, pedido }: OrderDetailModa
                         ID do Pedido: {pedido._id}
                     </p>
                     <p className="text-[9px] text-text-tertiary">
-                        Data do Registro: {pedido.createdAt ? format(new Date(pedido.createdAt), "dd/MM/yyyy HH:mm:ss", { locale: ptBR }) : "--/--/----"}
+                        Data do Registro: {safeFormatDate(pedido.createdAt, "dd/MM/yyyy HH:mm:ss")}
                     </p>
                 </div>
             </DialogContent>

@@ -12,8 +12,8 @@ import {
   Eye,
   Search
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { format, formatDistanceToNow } from "date-fns";
+import { cn, safeFormatDate } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -103,31 +103,44 @@ export default function PedidosPage() {
               ) : (
                 filteredPedidos.map((pedido) => {
                   const cliente = pedido.cliente_id || pedido.usuario_id;
+                  const clienteNome = (typeof cliente === 'object' ? cliente?.nome : null) || "Cliente não identificado";
+                  const clienteEmail = (typeof cliente === 'object' ? cliente?.email : null) || "-";
+                  const clienteTelefone = (typeof cliente === 'object' ? cliente?.telefone : null);
+
                   return (
                     <tr key={pedido._id} className="hover:bg-surface-light/50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
                           <span className="text-sm font-bold text-text-primary">#{pedido._id.slice(-6).toUpperCase()}</span>
                           <span className="text-[10px] font-bold text-text-primary mt-1">
-                            {pedido.createdAt ? format(new Date(pedido.createdAt), "dd MMM, HH:mm", { locale: ptBR }) : "-- ---, --:--"}
+                            {safeFormatDate(pedido.createdAt, "dd MMM, HH:mm")}
                           </span>
                           <span className="text-[9px] text-text-tertiary uppercase font-medium">
-                            {pedido.createdAt ? formatDistanceToNow(new Date(pedido.createdAt), { addSuffix: true, locale: ptBR }) : ""}
+                            {pedido.createdAt ? (
+                              (() => {
+                                try {
+                                  return formatDistanceToNow(new Date(pedido.createdAt), { addSuffix: true, locale: ptBR });
+                                } catch {
+                                  return "";
+                                }
+                              })()
+                            ) : ""}
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium text-text-primary">{cliente?.nome || "Cliente não identificado"}</span>
-                          <span className="text-xs text-text-tertiary">{cliente?.email || "-"}</span>
-                          {cliente?.telefone && (
-                            <span className="text-[10px] text-primary-green font-bold mt-0.5">{maskPhone(cliente.telefone)}</span>
+                          <span className="text-sm font-medium text-text-primary">{clienteNome}</span>
+                          <span className="text-xs text-text-tertiary">{clienteEmail}</span>
+                          {clienteTelefone && (
+                            <span className="text-[10px] text-primary-green font-bold mt-0.5">{maskPhone(clienteTelefone)}</span>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm font-bold text-text-primary">
                         R$ {(pedido.total_pedido || pedido.totais?.total || 0).toFixed(2).replace('.', ',')}
                       </td>
+
                       <td className="px-6 py-4 text-xs font-medium text-text-tertiary uppercase">
                         {pedido.forma_pagamento}
                       </td>

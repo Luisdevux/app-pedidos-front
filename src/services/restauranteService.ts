@@ -87,5 +87,12 @@ export const restauranteService = {
       endpoint: `/restaurantes/${id}/foto`,
       method: 'DELETE',
     });
+  },
+
+  deletar: async (id: string) => {
+    await secureFetch({
+      endpoint: `/restaurantes/${id}`,
+      method: 'DELETE',
+    });
   }
 };

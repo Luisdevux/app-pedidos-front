@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Restaurante } from "@/services/restauranteService";
-import { categoriaService, type Categoria } from "@/services/categoriaService";
+import { categoriaService } from "@/services/categoriaService";
 import { useEnderecoRestaurante, useRestauranteMutations } from "@/hooks/useRestaurantes";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,7 +20,9 @@ import {
   Trash2,
   AlertCircle,
   Clock,
-  ChevronDown
+  ChevronDown,
+  CheckCircle2,
+  ShieldAlert
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -31,6 +33,7 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { maskPhone, maskCNPJ, unmask } from "@/lib/masks";
 import { useActiveRestaurante } from "@/hooks/useActiveRestaurante";
+import { toast } from "sonner";
 import { 
   Dialog, 
   DialogContent, 
@@ -66,8 +69,12 @@ export default function RestaurantePage() {
   const [isFetchingCep, setIsFetchingCep] = useState(false);
   const [isDeleteLogoOpen, setIsDeleteLogoOpen] = useState(false);
   const [isHorariosOpen, setIsHorariosOpen] = useState(false);
+  const [isAtivarModalOpen, setIsAtivarModalOpen] = useState(false);
+  const [pendingAtivoState, setPendingAtivoState] = useState<boolean | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [confirmationName, setConfirmationName] = useState("");
 
-  const { activeRestaurante, isLoading, isComplete, hasAddress } = useActiveRestaurante();
+  const { activeRestaurante, isLoading, isComplete, hasAddress, selectRestaurante, restaurantes } = useActiveRestaurante();
 
   const { data: categoriasData } = useQuery({
     queryKey: ['categorias'],
@@ -88,7 +95,9 @@ export default function RestaurantePage() {
     deleteFoto,
     isDeleting,
     saveEndereco, 
-    isSavingEndereco 
+    isSavingEndereco,
+    deleteRestaurante,
+    isDeletingRestaurante
   } = useRestauranteMutations(restauranteAtivo?._id);
 
   const { register, handleSubmit, reset, watch, setValue } = useForm<Partial<Restaurante>>({
@@ -152,10 +161,11 @@ export default function RestaurantePage() {
         telefone: maskPhone(restauranteAtivo.telefone || ""),
         cnpj: maskCNPJ(restauranteAtivo.cnpj || ""),
         status: restauranteAtivo.status,
+        ativo: restauranteAtivo.ativo,
         taxa_entrega: restauranteAtivo.taxa_entrega || 0,
         estimativa_entrega_min: restauranteAtivo.estimativa_entrega_min || 0,
         estimativa_entrega_max: restauranteAtivo.estimativa_entrega_max || 0,
-        categoria_ids: (restauranteAtivo.categoria_ids || []).map((cat: string | Categoria) => 
+        categoria_ids: (restauranteAtivo.categoria_ids || []).map((cat: string | { _id: string }) => 
             typeof cat === 'object' ? cat._id : cat
         ),
         horario_funcionamento: (restauranteAtivo.horario_funcionamento && restauranteAtivo.horario_funcionamento.length > 0)
@@ -196,6 +206,25 @@ export default function RestaurantePage() {
     setValue("horario_funcionamento", novosHorarios, { shouldDirty: true });
   };
 
+  const confirmExclusao = () => {
+    if (confirmationName === restauranteAtivo?.nome) {
+        deleteRestaurante(undefined, {
+            onSuccess: () => {
+                setIsDeleteModalOpen(false);
+                // Selecionar outro restaurante se existir
+                const outros = restaurantes.filter(r => r._id !== restauranteAtivo?._id);
+                if (outros.length > 0) {
+                    selectRestaurante(outros[0]._id);
+                } else {
+                    window.location.reload(); // Vai cair no onboarding
+                }
+            }
+        });
+    } else {
+        toast.error("O nome digitado não confere.");
+    }
+  };
+
   if (isLoading) return <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary-green" /></div>;
 
   return (
@@ -208,8 +237,8 @@ export default function RestaurantePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-text-primary">
         
         {/* Lado Esquerdo: Identidade Visual e Status Rápido */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-surface-white rounded-[2.5rem] shadow-sm border border-border-gray overflow-hidden sticky top-6">
+        <div className="lg:col-span-1 space-y-6 sticky top-6 self-start">
+          <div className="bg-surface-white rounded-[2.5rem] shadow-lg shadow-primary-green/5 border border-border-gray overflow-hidden">
             <div className="p-10 text-center">
               <div className="relative w-32 h-32 mx-auto mb-8">
                 <div className="relative w-full h-full rounded-[2rem] bg-surface-light border-2 border-dashed border-border-gray flex items-center justify-center overflow-hidden shadow-inner group">
@@ -222,7 +251,7 @@ export default function RestaurantePage() {
                       className="object-cover group-hover:scale-110 transition-transform duration-500" 
                     />
                   ) : (
-                    <Store className="w-12 h-12 text-text-tertiary opacity-20" />
+                    <Store className="w-12 h-12 text-text-tertiary opacity-40" />
                   )}
                   {isUploading && (
                     <div className="absolute inset-0 bg-surface-white/80 backdrop-blur-sm flex items-center justify-center">
@@ -256,9 +285,14 @@ export default function RestaurantePage() {
               <p className="text-[10px] font-black text-text-tertiary uppercase tracking-widest mt-1 mb-6">Logo do Estabelecimento</p>
               
               <div className="flex items-center justify-center gap-2 px-4 py-2 bg-surface-light rounded-full border border-border-gray w-fit mx-auto shadow-sm">
-                <div className={cn("w-2 h-2 rounded-full", restauranteAtivo?.status === 'aberto' ? "bg-primary-green shadow-[0_0_8px_rgba(20,184,34,0.5)]" : "bg-error-button")} />
+                <div className={cn(
+                    "w-2 h-2 rounded-full", 
+                    !restauranteAtivo?.ativo ? "bg-text-tertiary" :
+                    restauranteAtivo?.status === 'aberto' ? "bg-primary-green shadow-[0_0_8px_rgba(20,184,34,0.5)]" : "bg-error-button"
+                )} />
                 <span className="text-[10px] font-black uppercase tracking-widest text-text-primary">
-                  {restauranteAtivo?.status === 'aberto' ? 'Loja Aberta' : 'Loja Fechada'}
+                  {!restauranteAtivo?.ativo ? 'Loja Inativa' :
+                   restauranteAtivo?.status === 'aberto' ? 'Loja Aberta' : 'Loja Fechada'}
                 </span>
               </div>
             </div>
@@ -266,12 +300,12 @@ export default function RestaurantePage() {
             <div className="p-8 border-t border-border-gray bg-surface-light/30">
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-xs font-black text-text-primary uppercase tracking-tighter">Funcionamento</p>
+                        <p className="text-xs font-black text-text-primary uppercase tracking-tighter">Disponibilidade</p>
                         <p className={cn(
                           "text-[10px] font-medium mt-0.5",
                           !isComplete ? "text-error-text" : "text-text-secondary"
                         )}>
-                          {!isComplete ? "Dados obrigatórios pendentes" : "Gerenciamento manual da loja"}
+                          {!isComplete ? "Dados obrigatórios pendentes" : "Controle manual da loja"}
                         </p>
                     </div>
                     {isSavingStatus ? (
@@ -279,7 +313,7 @@ export default function RestaurantePage() {
                     ) : (
                         <Switch 
                             type="button"
-                            disabled={!isComplete}
+                            disabled={!isComplete || !restauranteAtivo?.ativo}
                             checked={restauranteAtivo?.status === 'aberto'}
                             onCheckedChange={(checked) => saveStatus(checked ? 'aberto' : 'fechado')}
                             className="cursor-pointer"
@@ -287,6 +321,69 @@ export default function RestaurantePage() {
                     )}
                 </div>
             </div>
+          </div>
+
+          {/* CARD: Status da Conta (Ativação Global) */}
+          <div className="bg-surface-white rounded-[2.5rem] shadow-lg shadow-primary-green/5 border border-border-gray overflow-hidden">
+             <div className="p-8 space-y-6">
+                <div className="flex items-center gap-4">
+                   <div className={cn(
+                       "w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner",
+                       restauranteAtivo?.ativo ? "bg-primary-green/10 text-primary-green" : "bg-text-tertiary/10 text-text-tertiary"
+                   )}>
+                       {restauranteAtivo?.ativo ? <CheckCircle2 className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
+                   </div>
+                   <div className="space-y-0.5">
+                       <h4 className="text-sm font-black text-text-primary uppercase tracking-tight">Visibilidade Global</h4>
+                       <p className="text-[10px] font-medium text-text-secondary">
+                          {restauranteAtivo?.ativo ? "Loja visível no App Mobile" : "Loja oculta para todos os clientes"}
+                       </p>
+                   </div>
+                </div>
+
+                <Button 
+                    variant={restauranteAtivo?.ativo ? "outline" : "default"}
+                    className={cn(
+                        "w-full h-12 rounded-xl font-black text-xs transition-all active:scale-95 cursor-pointer",
+                        restauranteAtivo?.ativo 
+                            ? "border-error-text/30 text-error-text hover:bg-error-bg hover:border-error-text" 
+                            : "bg-primary-green text-white hover:bg-primary-green/90 border-none shadow-lg shadow-primary-green/10"
+                    )}
+                    onClick={() => {
+                        setPendingAtivoState(!restauranteAtivo?.ativo);
+                        setIsAtivarModalOpen(true);
+                    }}
+                >
+                    {restauranteAtivo?.ativo ? "DESATIVAR ESTABELECIMENTO" : "ATIVAR ESTABELECIMENTO"}
+                </Button>
+             </div>
+             {!restauranteAtivo?.ativo && (
+                 <div className="px-8 py-3 bg-error-bg/30 border-t border-error-text/10">
+                     <p className="text-[9px] font-bold text-error-text uppercase text-center leading-tight">
+                        Sua loja está pausada. Clientes não conseguem te encontrar ou fazer pedidos.
+                     </p>
+                 </div>
+             )}
+          </div>
+
+          {/* CARD: Zona de Perigo (Exclusão) */}
+          <div className="bg-error-bg/20 rounded-[2.5rem] border border-error-text/20 overflow-hidden">
+             <div className="p-8 space-y-4">
+                <div className="flex items-center gap-3">
+                    <ShieldAlert className="w-5 h-5 text-error-text" />
+                    <h4 className="text-sm font-black text-error-text uppercase tracking-tight">Zona de Perigo</h4>
+                </div>
+                <p className="text-[10px] font-medium text-text-secondary leading-relaxed">
+                    A exclusão removerá sua loja do sistema de forma segura, mantendo apenas dados fiscais e históricos obrigatórios por lei.
+                </p>
+                <Button 
+                    variant="ghost"
+                    className="w-full h-10 rounded-xl font-bold text-[10px] text-error-text hover:bg-error-button hover:text-white transition-all cursor-pointer border border-error-text/10"
+                    onClick={() => setIsDeleteModalOpen(true)}
+                >
+                    EXCLUIR ESTE RESTAURANTE
+                </Button>
+             </div>
           </div>
         </div>
 
@@ -308,7 +405,7 @@ export default function RestaurantePage() {
                 taxa_entrega: d.taxa_entrega ? Number(d.taxa_entrega) : 0,
                 estimativa_entrega_min: d.estimativa_entrega_min ? Number(d.estimativa_entrega_min) : 0,
                 estimativa_entrega_max: d.estimativa_entrega_max ? Number(d.estimativa_entrega_max) : 0,
-                horario_funcionamento: horarios // Garante o envio dos horários
+                horario_funcionamento: horarios 
               };
               saveRestaurante(payload);
             })} className="space-y-8">
@@ -441,8 +538,8 @@ export default function RestaurantePage() {
                 {isHorariosOpen && (
                     <div className="grid grid-cols-1 gap-3 animate-in slide-in-from-top-4 duration-300">
                     {DIAS_SEMANA.map((dia) => {
-                        const hIndex = horarios.findIndex(it => it.dia === dia.id);
-                        const h = hIndex !== -1 ? horarios[hIndex] : null;
+                        const hIndex = (horarios || []).findIndex(it => it.dia === dia.id);
+                        const h = hIndex !== -1 ? (horarios || [])[hIndex] : null;
                         if (!h) return null;
 
                         return (
@@ -453,7 +550,7 @@ export default function RestaurantePage() {
                             <div className="flex items-center gap-3">
                                 <div className="relative">
                                     <div className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-primary-green rounded-lg flex items-center justify-center shadow-sm">
-                                        <Clock className="w-4 h-4 text-white" />
+                                        <Clock className="w-3.5 h-3.5 text-white" />
                                     </div>
                                     <input 
                                         type="time" 
@@ -465,7 +562,7 @@ export default function RestaurantePage() {
                                 <span className="text-[10px] font-black text-text-tertiary uppercase px-1">Até</span>
                                 <div className="relative">
                                     <div className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-primary-green rounded-lg flex items-center justify-center shadow-sm">
-                                        <Clock className="w-4 h-4 text-white" />
+                                        <Clock className="w-3.5 h-3.5 text-white" />
                                     </div>
                                     <input 
                                         type="time" 
@@ -579,7 +676,7 @@ export default function RestaurantePage() {
                   <Input {...regEnd("complemento")} placeholder="Apt, Sala, Bloco..." className="bg-surface-light border-border-gray/50 h-14 text-text-primary font-bold rounded-2xl shadow-inner focus:ring-4 focus:ring-primary-green/5" />
               </div>
 
-              <Button type="submit" variant="secondary" disabled={isSavingEndereco} className="w-full md:w-fit px-12 h-14 rounded-2xl font-black text-lg shadow-xl bg-primary-navy text-white hover:bg-primary-navy/90 border-none cursor-pointer active:scale-95 transition-all">
+              <Button type="submit" variant="secondary" disabled={isSavingEndereco} className="w-full md:w-fit px-12 h-14 rounded-2xl font-black text-lg shadow-lg bg-primary-navy text-white hover:bg-primary-navy/90 border-none cursor-pointer active:scale-95 transition-all">
                 {isSavingEndereco ? <Loader2 className="w-5 h-5 animate-spin mr-3" /> : <Save className="w-5 h-5 mr-3" />}
                 ATUALIZAR ENDEREÇO
               </Button>
@@ -590,13 +687,13 @@ export default function RestaurantePage() {
       </div>
 
       <Dialog open={isDeleteLogoOpen} onOpenChange={setIsDeleteLogoOpen}>
-        <DialogContent className="sm:max-w-[420px] bg-surface-white border-border-gray shadow-xl rounded-[3rem] p-10 text-text-primary">
+        <DialogContent className="sm:max-w-[420px] bg-surface-white border-border-gray shadow-2xl rounded-[3rem] p-10 text-text-primary">
           <DialogHeader className="space-y-4">
             <div className="w-20 h-20 bg-error-bg rounded-[2rem] flex items-center justify-center mx-auto shadow-xl shadow-error-text/5">
                 <Trash2 className="w-10 h-10 text-error-text" />
             </div>
             <DialogTitle className="text-text-primary font-black text-2xl text-center">Remover Logotipo?</DialogTitle>
-            <DialogDescription className="text-center font-medium text-text-secondary">
+            <DialogDescription className="text-center font-medium text-text-secondary leading-relaxed">
               Sua marca não será mais exibida para os clientes no App. Deseja prosseguir?
             </DialogDescription>
           </DialogHeader>
@@ -604,7 +701,7 @@ export default function RestaurantePage() {
             <Button variant="ghost" className="h-14 rounded-2xl font-bold text-text-tertiary border-none shadow-none cursor-pointer transition-all" onClick={() => setIsDeleteLogoOpen(false)}>MANTER</Button>
             <Button 
                 variant="destructive" 
-                className="h-14 rounded-2xl font-black shadow-lg cursor-pointer active:scale-95 transition-all" 
+                className="h-14 rounded-2xl font-black shadow-lg cursor-pointer active:scale-95 transition-all border-none" 
                 disabled={isDeleting}
                 onClick={() => {
                     deleteFoto();
@@ -612,6 +709,84 @@ export default function RestaurantePage() {
                 }}
             >
                 {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : "REMOVER"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAtivarModalOpen} onOpenChange={setIsAtivarModalOpen}>
+        <DialogContent className="sm:max-w-[420px] bg-surface-white border-border-gray shadow-2xl rounded-[3rem] p-10 text-text-primary">
+          <DialogHeader className="space-y-4">
+            <div className={cn(
+                "w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto shadow-xl",
+                pendingAtivoState ? "bg-success-bg text-primary-green shadow-primary-green/5" : "bg-error-bg text-error-text shadow-error-text/5"
+            )}>
+                {pendingAtivoState ? <CheckCircle2 className="w-10 h-10" /> : <AlertCircle className="w-10 h-10" />}
+            </div>
+            <DialogTitle className="text-text-primary font-black text-2xl text-center">
+                {pendingAtivoState ? "Reativar Loja?" : "Desativar Loja?"}
+            </DialogTitle>
+            <DialogDescription className="text-center font-medium text-text-secondary leading-relaxed">
+              {pendingAtivoState 
+                ? "Sua loja voltará a aparecer nos resultados de busca do App Mobile e os clientes poderão fazer pedidos." 
+                : "Ao desativar, sua loja ficará oculta para todos os clientes no App Mobile. Você pode reativar a qualquer momento."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 mt-10">
+            <Button variant="ghost" className="h-14 rounded-2xl font-bold text-text-tertiary border-none shadow-none cursor-pointer transition-all" onClick={() => setIsAtivarModalOpen(false)}>CANCELAR</Button>
+            <Button 
+                className={cn(
+                    "h-14 rounded-2xl font-black shadow-lg cursor-pointer active:scale-95 transition-all border-none text-white",
+                    pendingAtivoState ? "bg-primary-green hover:bg-primary-green/90" : "bg-error-button hover:bg-error-button/90"
+                )}
+                onClick={() => {
+                    if (pendingAtivoState !== null) {
+                        saveRestaurante({ ativo: pendingAtivoState });
+                    }
+                    setIsAtivarModalOpen(false);
+                }}
+            >
+                {pendingAtivoState ? "REATIVAR" : "DESATIVAR"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent className="sm:max-w-[480px] bg-surface-white border-border-gray shadow-2xl rounded-[3rem] p-10 text-text-primary">
+          <DialogHeader className="space-y-4">
+            <div className="w-20 h-20 bg-error-bg text-error-text rounded-[2rem] flex items-center justify-center mx-auto shadow-xl shadow-error-text/5">
+                <ShieldAlert className="w-10 h-10" />
+            </div>
+            <DialogTitle className="text-text-primary font-black text-2xl text-center">Excluir Estabelecimento?</DialogTitle>
+            <DialogDescription className="text-center font-medium text-text-secondary leading-relaxed">
+              Esta ação é irreversível. Todos os seus produtos e configurações serão ocultados. 
+              Para confirmar, digite o nome do restaurante abaixo:
+              <br/>
+              <span className="mt-2 block font-black text-primary-navy bg-surface-light py-2 rounded-xl border border-border-gray/50 select-none">
+                  {restauranteAtivo?.nome}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="mt-6 space-y-4">
+            <Input 
+                value={confirmationName}
+                onChange={(e) => setConfirmationName(e.target.value)}
+                placeholder="Digite o nome aqui..."
+                className="h-14 bg-surface-light border-border-gray rounded-2xl text-center font-bold text-primary-navy"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mt-8">
+            <Button variant="ghost" className="h-14 rounded-2xl font-bold text-text-tertiary border-none shadow-none cursor-pointer transition-all" onClick={() => setIsDeleteModalOpen(false)}>CANCELAR</Button>
+            <Button 
+                variant="destructive"
+                className="h-14 rounded-2xl font-black shadow-lg cursor-pointer active:scale-95 transition-all border-none" 
+                disabled={isDeletingRestaurante || confirmationName !== restauranteAtivo?.nome}
+                onClick={confirmExclusao}
+            >
+                {isDeletingRestaurante ? <Loader2 className="w-5 h-5 animate-spin" /> : "EXCLUIR AGORA"}
             </Button>
           </div>
         </DialogContent>

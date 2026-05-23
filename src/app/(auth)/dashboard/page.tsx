@@ -19,11 +19,10 @@ import {
   BarChart,
   Bar
 } from 'recharts';
-import { cn } from "@/lib/utils";
+import { cn, safeFormatDate } from "@/lib/utils";
 import Link from "next/link";
 import { BlockedOverlay } from "@/components/BlockedOverlay";
-import { format, subDays, isSameDay } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { subDays, isSameDay } from "date-fns";
 
 export default function DashboardPage() {
   const { activeRestaurante, isLoading: isLoadingRest, isComplete } = useActiveRestaurante();
@@ -34,7 +33,7 @@ export default function DashboardPage() {
 
   // Cálculos Reais de Totais
   const totalVendas = pedidos
-    .filter(p => p.status === 'entregue')
+    .filter(p => p.status !== 'cancelado')
     .reduce((acc, p) => acc + (p.total_pedido || p.totais?.total || 0), 0);
 
   const pedidosPendentes = pedidos.filter(p => p.status === 'criado').length;
@@ -42,22 +41,36 @@ export default function DashboardPage() {
 
   // Clientes únicos (verificando ambos os campos de ID de usuário possíveis)
   const uniqueClients = new Set(
-    pedidos.map(p => p.cliente_id?.email || p.usuario_id?.email).filter(Boolean)
+    pedidos.map(p => {
+      const cliente = p.cliente_id || p.usuario_id;
+      return typeof cliente === 'object' ? cliente?.email : null;
+    }).filter(Boolean)
   ).size;
 
   // Lógica para os Gráficos (Últimos 7 dias)
   const last7Days = Array.from({ length: 7 }).map((_, i) => {
     const date = subDays(new Date(), 6 - i);
-    const dayLabel = format(date, "EEE", { locale: ptBR });
+    const dayLabel = safeFormatDate(date, "EEE");
     
     const dayPedidos = pedidos.filter(p => {
         if (!p.createdAt) return false;
-        const pDate = new Date(p.createdAt);
-        return isSameDay(pDate, date);
+        try {
+          let pDate: Date;
+          if (typeof p.createdAt === 'string' && p.createdAt.includes('/')) {
+            const datePart = p.createdAt.split(' ')[0];
+            const [d, m, y] = datePart.split('/').map(Number);
+            pDate = new Date(y, m - 1, d);
+          } else {
+            pDate = new Date(p.createdAt);
+          }
+          return isSameDay(pDate, date);
+        } catch {
+          return false;
+        }
     });
 
     const dayVendas = dayPedidos
-        .filter(p => p.status === 'entregue')
+        .filter(p => p.status !== 'cancelado')
         .reduce((acc, p) => acc + (p.total_pedido || p.totais?.total || 0), 0);
 
     return {
@@ -187,12 +200,15 @@ export default function DashboardPage() {
               <tbody className="divide-y divide-border-gray">
                 {pedidos.slice(0, 5).map((pedido) => {
                   const cliente = pedido.cliente_id || pedido.usuario_id;
+                  const clienteNome = (typeof cliente === 'object' ? cliente?.nome : null) || "Cliente não identificado";
+                  const clienteEmail = (typeof cliente === 'object' ? cliente?.email : null) || "-";
+
                   return (
                     <tr key={pedido._id} className="hover:bg-surface-light/30 transition-colors">
                       <td className="px-6 py-4 text-xs font-bold text-text-primary">#{pedido._id.slice(-6).toUpperCase()}</td>
                       <td className="px-6 py-4">
-                        <div className="text-xs font-bold text-text-primary">{cliente?.nome || "Cliente não identificado"}</div>
-                        <div className="text-[10px] text-text-tertiary">{cliente?.email || "-"}</div>
+                        <div className="text-xs font-bold text-text-primary">{clienteNome}</div>
+                        <div className="text-[10px] text-text-tertiary">{clienteEmail}</div>
                       </td>
                       <td className="px-6 py-4 text-xs font-black text-primary-green">R$ {(pedido.total_pedido || pedido.totais?.total || 0).toFixed(2).replace('.', ',')}</td>
                       <td className="px-6 py-4">

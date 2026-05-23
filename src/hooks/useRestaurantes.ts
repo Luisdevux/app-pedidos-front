@@ -23,18 +23,21 @@ export function useEnderecoRestaurante(restauranteId?: string) {
   });
 }
 
-export function useRestauranteMutations(id?: string) {
+export function useRestauranteMutations(restauranteId?: string) {
   const queryClient = useQueryClient();
 
   const updateMutation = useMutation({
     mutationFn: (dados: Partial<Restaurante>) => {
-      if (id) {
-        return restauranteService.atualizar(id, dados);
+      if (restauranteId) {
+        return restauranteService.atualizar(restauranteId, dados);
       }
       return restauranteService.criar(dados);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.restaurantes.meus });
+      if (restauranteId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.restaurantes.detalhes(restauranteId) });
+      }
       toast.success("Dados do restaurante salvos!");
     },
     onError: (error: Error) => {
@@ -44,10 +47,14 @@ export function useRestauranteMutations(id?: string) {
 
   const updateStatusMutation = useMutation({
     mutationFn: (status: 'aberto' | 'fechado') => {
-      return restauranteService.atualizar(id!, { status });
+      if (!restauranteId) throw new Error("ID do restaurante não fornecido");
+      return restauranteService.atualizar(restauranteId, { status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.restaurantes.meus });
+      if (restauranteId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.restaurantes.detalhes(restauranteId) });
+      }
       toast.success("Status atualizado!");
     },
     onError: (error: Error) => {
@@ -56,9 +63,15 @@ export function useRestauranteMutations(id?: string) {
   });
 
   const uploadFotoMutation = useMutation({
-    mutationFn: (file: File) => restauranteService.uploadFoto(id!, file),
+    mutationFn: (file: File) => {
+      if (!restauranteId) throw new Error("ID do restaurante não fornecido");
+      return restauranteService.uploadFoto(restauranteId, file);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.restaurantes.meus });
+      if (restauranteId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.restaurantes.detalhes(restauranteId) });
+      }
       toast.success("Foto atualizada!");
     },
     onError: (error: Error) => {
@@ -67,9 +80,15 @@ export function useRestauranteMutations(id?: string) {
   });
 
   const deleteFotoMutation = useMutation({
-    mutationFn: () => restauranteService.excluirFoto(id!),
+    mutationFn: () => {
+      if (!restauranteId) throw new Error("ID do restaurante não fornecido");
+      return restauranteService.excluirFoto(restauranteId);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.restaurantes.meus });
+      if (restauranteId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.restaurantes.detalhes(restauranteId) });
+      }
       toast.success("Foto removida!");
     },
     onError: (error: Error) => {
@@ -93,6 +112,20 @@ export function useRestauranteMutations(id?: string) {
     },
   });
 
+  const deleteRestauranteMutation = useMutation({
+    mutationFn: () => {
+      if (!restauranteId) throw new Error("ID do restaurante não fornecido");
+      return restauranteService.deletar(restauranteId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.restaurantes.meus });
+      toast.success("Restaurante excluído com sucesso.");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao excluir restaurante.");
+    },
+  });
+
   return {
     saveRestaurante: updateMutation.mutate,
     isSaving: updateMutation.isPending,
@@ -104,5 +137,7 @@ export function useRestauranteMutations(id?: string) {
     isDeleting: deleteFotoMutation.isPending,
     saveEndereco: saveEnderecoMutation.mutate,
     isSavingEndereco: saveEnderecoMutation.isPending,
+    deleteRestaurante: deleteRestauranteMutation.mutate,
+    isDeletingRestaurante: deleteRestauranteMutation.isPending,
   };
 }
