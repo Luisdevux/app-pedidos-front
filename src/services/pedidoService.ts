@@ -26,6 +26,12 @@ export interface Pedido {
     quantidade: number;
     preco_unitario: number;
     total_item: number;
+    adicionais?: Array<{
+        opcao_id: string;
+        opcao_nome: string;
+        preco_unitario: number;
+        quantidade: number;
+    }>;
   }>;
   status: 'criado' | 'em_preparo' | 'a_caminho' | 'entregue' | 'cancelado';
   total_pedido?: number;

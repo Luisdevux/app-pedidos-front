@@ -151,8 +151,18 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
 
           <div className="mt-auto pt-6 border-t border-secondary-navy">
             <div className="flex items-center gap-3 mb-6 px-2">
-              <div className="shrink-0 w-10 h-10 rounded-full bg-secondary-navy border border-primary-green flex items-center justify-center font-bold">
-                {session?.user?.name?.[0] || "U"}
+              <div className="shrink-0 w-10 h-10 rounded-full bg-secondary-navy border border-primary-green flex items-center justify-center font-bold overflow-hidden relative">
+                {session?.user?.image ? (
+                  <Image 
+                    src={session.user.image} 
+                    alt={session.user.name || "User"} 
+                    fill 
+                    unoptimized
+                    className="object-cover"
+                  />
+                ) : (
+                  session?.user?.name?.[0] || "U"
+                )}
               </div>
               <div className="flex flex-col overflow-hidden min-w-0">
                 <span className="text-sm font-semibold truncate text-white">{session?.user?.name}</span>

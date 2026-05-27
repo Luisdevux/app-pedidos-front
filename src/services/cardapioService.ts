@@ -30,7 +30,7 @@ export interface Prato {
   foto_prato?: string;
   secao: string;
   status: 'ativo' | 'inativo';
-  adicionais_grupo_ids: string[];
+  adicionais_grupo_ids: (string | AdicionalGrupo)[];
 }
 
 export const cardapioService = {
@@ -139,7 +139,7 @@ export const cardapioService = {
 
   listarOpcoesAdicionais: async (grupoId: string) => {
     const response = await secureFetch<{ data: AdicionalOpcao[] }>({
-      endpoint: `/adicionais/opcoes/${grupoId}`,
+      endpoint: `/adicionais/grupos/${grupoId}/opcoes`,
     });
     return response.data;
   },

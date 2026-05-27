@@ -78,6 +78,7 @@ const authOptions: NextAuthOptions = {
               name: apiUser.nome,
               email: apiUser.email,
               role: apiUser.role,
+              image: apiUser.foto_perfil,
               accessToken: apiUser.accessToken || apiUser.accesstoken,
               refreshToken: apiUser.refreshtoken || apiUser.refreshToken,
             };
@@ -107,6 +108,7 @@ const authOptions: NextAuthOptions = {
             (user as { refreshToken?: string }).refreshToken = apiUser.refreshtoken || apiUser.refreshToken;
             user.name = apiUser.nome;
             user.email = apiUser.email;
+            user.image = apiUser.foto_perfil;
             return true;
           }
         } catch {
@@ -123,6 +125,7 @@ const authOptions: NextAuthOptions = {
           id: user.id,
           name: user.name,
           email: user.email,
+          image: user.image,
           role: (user as { role?: string }).role,
           accessToken: (user as { accessToken?: string }).accessToken,
           refreshToken: (user as { refreshToken?: string }).refreshToken,
@@ -143,6 +146,7 @@ const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.name = token.name as string;
         session.user.email = token.email as string;
+        session.user.image = token.image as string;
         session.user.role = token.role as string;
         session.accessToken = token.accessToken as string;
         session.refreshToken = token.refreshToken as string;

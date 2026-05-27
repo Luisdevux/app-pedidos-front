@@ -24,8 +24,10 @@ import {
     CheckCircle2,
     XCircle
 } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { useEnderecoUsuario } from "@/hooks/useEnderecos";
-import { cn, safeFormatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { maskPhone, maskCPF } from "@/lib/masks";
 
 interface OrderDetailModalProps {
@@ -44,17 +46,11 @@ const statusConfig = {
 
 export function OrderDetailModal({ open, onOpenChange, pedido }: OrderDetailModalProps) {
     const cliente = pedido?.cliente_id || pedido?.usuario_id;
-    const clienteNome = (typeof cliente === 'object' ? cliente?.nome : null) || "Cliente não identificado";
-    const clienteEmail = (typeof cliente === 'object' ? cliente?.email : null) || "-";
-    const clienteTelefone = (typeof cliente === 'object' ? cliente?.telefone : null);
-    const clienteCpf = (typeof cliente === 'object' ? cliente?.cpf : null);
-    const clienteId = typeof cliente === 'object' ? cliente?._id : (typeof cliente === 'string' ? cliente : undefined);
-
-    const { data: enderecos, isLoading: isLoadingAddr } = useEnderecoUsuario(clienteId);
+    const { data: enderecos, isLoading: isLoadingAddr } = useEnderecoUsuario(cliente?._id);
     
     if (!pedido) return null;
 
-    const enderecoEntrega = (enderecos || [])?.find(e => e.principal) || (enderecos || [])?.[0];
+    const enderecoEntrega = enderecos?.find(e => e.principal) || enderecos?.[0];
     const status = statusConfig[pedido.status] || statusConfig.criado;
     const StatusIcon = status.icon;
 
@@ -88,26 +84,26 @@ export function OrderDetailModal({ open, onOpenChange, pedido }: OrderDetailModa
                         </h3>
                         <div className="bg-surface-light/50 p-4 rounded-2xl border border-border-gray/50 space-y-3">
                             <div>
-                                <p className="font-bold text-text-primary">{clienteNome}</p>
-                                <p className="text-sm text-text-secondary">{clienteEmail}</p>
+                                <p className="font-bold text-text-primary">{cliente?.nome || "Cliente não identificado"}</p>
+                                <p className="text-sm text-text-secondary">{cliente?.email || "-"}</p>
                             </div>
                             
                             <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border-gray/30">
-                                {clienteTelefone && (
+                                {cliente?.telefone && (
                                     <div className="flex flex-col gap-1">
                                         <span className="text-[9px] font-black text-text-tertiary uppercase">WhatsApp</span>
                                         <div className="flex items-center gap-1.5 text-primary-green text-xs font-black">
                                             <Phone className="w-3 h-3" />
-                                            {maskPhone(clienteTelefone)}
+                                            {maskPhone(cliente.telefone)}
                                         </div>
                                     </div>
                                 )}
-                                {clienteCpf && (
+                                {cliente?.cpf && (
                                     <div className="flex flex-col gap-1">
-                                        <span className="text-[9px] font-black text-text-tertiary uppercase">Documento CPF</span>
+                                        <span className="text-[9px] font-black text-text-tertiary uppercase">Documento</span>
                                         <div className="flex items-center gap-1.5 text-text-primary text-xs font-bold">
                                             <FileText className="w-3 h-3 text-text-tertiary" />
-                                            {maskCPF(clienteCpf)}
+                                            {maskCPF(cliente.cpf)}
                                         </div>
                                     </div>
                                 )}
@@ -165,26 +161,40 @@ export function OrderDetailModal({ open, onOpenChange, pedido }: OrderDetailModa
                             <Package className="w-3 h-3" /> Itens do Pedido
                         </h3>
                         <div className="space-y-2">
-                            {(pedido.itens || []).map((item, idx) => (
-                                <div key={idx} className="bg-surface-white p-4 rounded-2xl border border-border-gray flex flex-col gap-2">
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex gap-3">
-                                            <span className="font-black text-primary-green">{item.quantidade || 0}x</span>
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-text-primary leading-tight">
-                                                    {(typeof item.prato_id === 'object' ? item.prato_id?.nome : null) || item.prato_nome || "Produto"}
-                                                </span>
-                                                <span className="text-[10px] text-text-tertiary">
-                                                    Preço unit: R$ {(item.preco_unitario || 0).toFixed(2).replace('.', ',')}
-                                                </span>
+                            {pedido.itens.map((item, idx) => {
+                                // Cálculo correto do item incluindo adicionais
+                                const totalAdicionais = (item.adicionais || []).reduce((acc, ad) => acc + (ad.preco_unitario * ad.quantidade), 0);
+                                const totalLinhaItem = (item.preco_unitario + totalAdicionais) * item.quantidade;
+                                
+                                return (
+                                    <div key={idx} className="bg-surface-white p-4 rounded-2xl border border-border-gray flex flex-col gap-2 shadow-sm">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex gap-3">
+                                                <span className="font-black text-primary-green">{item.quantidade}x</span>
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-text-primary leading-tight">{item.prato_id?.nome || item.prato_nome || "Prato removido"}</span>
+                                                    <span className="text-[10px] text-text-tertiary">Unitário: R$ {item.preco_unitario.toFixed(2).replace('.', ',')}</span>
+                                                </div>
                                             </div>
+                                            <span className="font-bold text-text-primary text-sm whitespace-nowrap">
+                                                R$ {totalLinhaItem.toFixed(2).replace('.', ',')}
+                                            </span>
                                         </div>
-                                        <span className="font-bold text-text-primary">
-                                            R$ {((item.preco_unitario || 0) * (item.quantidade || 0)).toFixed(2).replace('.', ',')}
-                                        </span>
+
+                                        {/* Listagem de Adicionais se houver */}
+                                        {(item.adicionais || []).length > 0 && (
+                                            <div className="mt-2 pl-7 space-y-1 border-l-2 border-primary-green/20">
+                                                {item.adicionais?.map((ad, adIdx) => (
+                                                    <div key={adIdx} className="flex justify-between text-[10px] text-text-secondary">
+                                                        <span>+ {ad.quantidade}x {ad.opcao_nome}</span>
+                                                        <span className="font-bold">R$ {(ad.preco_unitario * ad.quantidade).toFixed(2).replace('.', ',')}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </section>
 
@@ -192,15 +202,15 @@ export function OrderDetailModal({ open, onOpenChange, pedido }: OrderDetailModa
                     <section className="pt-4 border-t border-dashed border-border-gray space-y-2">
                         <div className="flex justify-between text-sm text-text-secondary">
                             <span>Subtotal</span>
-                            <span>R$ {(pedido.total_pedido || pedido.totais?.total || 0).toFixed(2).replace('.', ',')}</span>
+                            <span className="font-bold text-text-primary">R$ {(pedido.totais?.subtotal || 0).toFixed(2).replace('.', ',')}</span>
                         </div>
                         <div className="flex justify-between text-sm text-text-secondary">
                             <span>Taxa de Entrega</span>
-                            <span>R$ {(pedido.totais?.taxa_entrega || 0).toFixed(2).replace('.', ',')}</span>
+                            <span className="font-bold text-text-primary">R$ {(pedido.totais?.taxa_entrega || 0).toFixed(2).replace('.', ',')}</span>
                         </div>
-                        <div className="flex justify-between text-lg font-black text-text-primary pt-2">
-                            <span>Total</span>
-                            <span className="text-primary-green">R$ {(pedido.total_pedido || pedido.totais?.total || 0).toFixed(2).replace('.', ',')}</span>
+                        <div className="flex justify-between text-lg font-black text-text-primary pt-3 border-t border-border-gray/30 mt-2">
+                            <span>Total Geral</span>
+                            <span className="text-primary-green text-xl">R$ {(pedido.totais?.total || 0).toFixed(2).replace('.', ',')}</span>
                         </div>
                     </section>
 
@@ -209,7 +219,7 @@ export function OrderDetailModal({ open, onOpenChange, pedido }: OrderDetailModa
                         <h3 className="text-xs font-black text-text-tertiary uppercase tracking-wider flex items-center gap-2">
                             <CreditCard className="w-3 h-3" /> Pagamento
                         </h3>
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface-light rounded-xl border border-border-gray text-xs font-bold text-text-primary uppercase">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface-light rounded-xl border border-border-gray text-xs font-bold text-text-primary uppercase shadow-sm">
                             {pedido.forma_pagamento || "Não informado"}
                         </div>
                     </section>
@@ -219,8 +229,8 @@ export function OrderDetailModal({ open, onOpenChange, pedido }: OrderDetailModa
                     <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-tighter">
                         ID do Pedido: {pedido._id}
                     </p>
-                    <p className="text-[9px] text-text-tertiary">
-                        Data do Registro: {safeFormatDate(pedido.createdAt, "dd/MM/yyyy HH:mm:ss")}
+                    <p className="text-[9px] text-text-tertiary font-medium">
+                        Registro: {pedido.createdAt ? format(new Date(pedido.createdAt), "dd/MM/yyyy HH:mm:ss", { locale: ptBR }) : "--/--/----"}
                     </p>
                 </div>
             </DialogContent>

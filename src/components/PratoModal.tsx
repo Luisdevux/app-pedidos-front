@@ -91,7 +91,9 @@ export function PratoModal({
           preco: initialData.preco,
           secao: initialData.secao,
           status: initialData.status,
-          adicionais_grupo_ids: initialData.adicionais_grupo_ids || [],
+          adicionais_grupo_ids: (initialData.adicionais_grupo_ids || []).map((g: string | AdicionalGrupo) => 
+            typeof g === 'object' ? g._id : g
+          ),
         });
       } else {
         reset({
